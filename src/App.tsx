@@ -8,7 +8,7 @@ import {
   useQuery,
 } from "convex/react";
 import { ConvexProvider } from "convex/react";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { api } from "../convex/_generated/api.js";
 import { createProxiedWebSocketClass } from "@convex-dev/sse-proxied-websocket";
 
@@ -230,7 +230,7 @@ function SSETest() {
   const [messages, setMessages] = useState<any[]>([]);
   const [error, setError] = useState<string | null>(null);
 
-  const runTest = () => {
+  const runTest = useCallback(() => {
     setStatus("connecting");
     setMessages([]);
     setError(null);
@@ -293,12 +293,12 @@ function SSETest() {
       setError(err instanceof Error ? err.message : "Failed to connect");
       setStatus("error");
     }
-  };
+  }, [status]);
 
   // Auto-run test on component mount
   useEffect(() => {
     runTest();
-  }, []);
+  }, [runTest]);
 
   return (
     <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
