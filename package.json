@@ -14,7 +14,7 @@
   },
   "dependencies": {
     "@convex-dev/sse-proxied-websocket": "0.1.0-alpha.5",
-    "convex": "1.26.0-alpha.3",
+    "convex": "1.26.0-alpha.7",
     "react": "^19.0.0",
     "react-dom": "^19.0.0"
   },
