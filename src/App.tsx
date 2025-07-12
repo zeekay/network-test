@@ -298,6 +298,7 @@ function SSETest() {
   // Auto-run test on component mount
   useEffect(() => {
     runTest();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (
