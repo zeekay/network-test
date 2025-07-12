@@ -6,15 +6,15 @@ test.describe('Network Connectivity Tests', () => {
     await page.goto('/');
     
     // Wait for the page to load and ensure all test components are present
-    await expect(page.locator('h1')).toContainText('Browser Network Test');
+    await expect(page.locator('h1').filter({ hasText: 'Browser Network Test' })).toBeVisible();
     
     // Test 1: WebSocket Test - should show "Connected"
     await test.step('WebSocket Test', async () => {
-      const websocketTest = page.locator('details').filter({ hasText: 'WebSocket Test' });
+      const websocketTest = page.locator('details').filter({ hasText: /^WebSocket Test/ });
       await expect(websocketTest).toBeVisible();
       
       // Wait for WebSocket connection to establish (up to 15 seconds)
-      await expect(websocketTest.locator('span').filter({ hasText: 'Connected' })).toBeVisible({ timeout: 15000 });
+      await expect(websocketTest.locator('span').filter({ hasText: 'Connected' }).first()).toBeVisible({ timeout: 15000 });
       
       // Verify green status indicator
       await expect(websocketTest.locator('.bg-green-500')).toBeVisible();
@@ -61,7 +61,7 @@ test.describe('Network Connectivity Tests', () => {
     await expect(page.locator('h2')).toContainText('Connection Tests');
     
     // Verify all test sections are present
-    await expect(page.locator('details').filter({ hasText: 'WebSocket Test' })).toBeVisible();
+    await expect(page.locator('details').filter({ hasText: /^WebSocket Test/ })).toBeVisible();
     await expect(page.locator('details').filter({ hasText: 'HTTP Test' })).toBeVisible();
     await expect(page.locator('details').filter({ hasText: 'Server-Sent Events (SSE) Test' })).toBeVisible();
     await expect(page.locator('details').filter({ hasText: 'Proxied WebSocket Test' })).toBeVisible();
