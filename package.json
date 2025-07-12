@@ -11,7 +11,10 @@
     "build": "tsc -b && vite build",
     "lint": "tsc && eslint .  --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
     "preview": "vite preview",
-    "dev-once": "convex dev --once"
+    "dev-once": "convex dev --once",
+    "test": "playwright test",
+    "test:headed": "playwright test --headed",
+    "test:ui": "playwright test --ui"
   },
   "dependencies": {
     "@convex-dev/sse-proxied-websocket": "0.1.0-alpha.5",
@@ -21,6 +24,7 @@
   },
   "devDependencies": {
     "@eslint/js": "^9.21.0",
+    "@playwright/test": "^1.54.1",
     "@types/node": "^22.13.10",
     "@types/react": "^19.0.10",
     "@types/react-dom": "^19.0.4",
@@ -36,6 +40,7 @@
     "tailwindcss": "^3.4.17",
     "typescript": "~5.7.2",
     "typescript-eslint": "^8.24.1",
-    "vite": "^6.2.0"
+    "vite": "^6.2.0",
+    "vitest": "^3.2.4"
   }
 }
