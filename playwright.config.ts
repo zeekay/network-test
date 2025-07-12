@@ -47,6 +47,8 @@ export default defineConfig({
     command: 'npm run dev:test',
     url: 'http://127.0.0.1:5173',
     reuseExistingServer: !process.env.CI,
-    timeout: 120 * 1000, // 2 minutes
+    timeout: 300 * 1000, // 5 minutes
+    stderr: 'pipe',
+    stdout: 'pipe',
   },
 });
