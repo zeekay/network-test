@@ -2,13 +2,12 @@
 
 import {
   ConvexReactClient,
-  useConvex,
   useConvexConnectionState,
   useMutation,
   useQuery,
 } from "convex/react";
 import { ConvexProvider } from "convex/react";
-import { useEffect, useRef, useState } from "react";
+import { ReactNode, useEffect, useState } from "react";
 import { api } from "../convex/_generated/api.js";
 import { createProxiedWebSocketClass } from "@convex-dev/sse-proxied-websocket";
 
@@ -47,75 +46,74 @@ const proxiedWebSocketConstructor = createProxiedWebSocketClass(
 (window as any).SSE_WS_VERBOSE = true;
 (window as any).proxiedWebSocketConstructor = proxiedWebSocketConstructor;
 
-function WebSocketTest() {
+function ConnectedWebSocket({
+  name,
+  children,
+}: {
+  name?: string;
+  children: ReactNode;
+}) {
   const [convex] = useState(
     () =>
       new ConvexReactClient(import.meta.env.VITE_CONVEX_URL as string, {
         onServerDisconnectError: (err) => {
           console.log(
-            "Normal ConvexReactClient client experienced server disconnect error:",
+            `${name} ConvexReactClient client experienced server disconnect error:`,
             err,
           );
         },
       }),
   );
 
-  return (
-    <ConvexProvider client={convex}>
-      <WebSocketTestInner />
-    </ConvexProvider>
-  );
+  return <ConvexProvider client={convex}>{children}</ConvexProvider>;
 }
 
-function useNonreactiveConnectionStatus() {
-  const convex = useConvex();
-  const [status, setStatus] = useState(convex.connectionState());
-  const lastStatusRef = useRef(status);
-
-  useEffect(() => {
-    const timer = setInterval(() => {
-      const curStatus = convex.connectionState();
-      if (JSON.stringify(curStatus) !== JSON.stringify(lastStatusRef.current)) {
-        lastStatusRef.current = curStatus;
-        setStatus(curStatus);
-      }
-    }, 200);
-    return () => {
-      clearTimeout(timer);
-    };
-  }, [convex]);
-
-  return status;
-}
-
-function WebSocketTestInner() {
-  const manualStatus = useNonreactiveConnectionStatus();
-  const reactiveStatus = useConvexConnectionState();
+function TestView({ queryResult }: { queryResult: boolean }) {
+  const status = useConvexConnectionState();
   const mut = useMutation(api.myFunctions.addNumber);
-  useQuery(api.myFunctions.listNumbers, { count: 1 });
-  const status = reactiveStatus;
+
+  const getConnectionStatus = () => {
+    if (status.isWebSocketConnected && queryResult) {
+      return {
+        status: "Connected",
+        color: "bg-green-500",
+        textColor: "text-green-600",
+      };
+    } else if (status.isWebSocketConnected && !queryResult) {
+      return {
+        status: "Loading...",
+        color: "bg-yellow-500",
+        textColor: "text-yellow-600",
+      };
+    } else {
+      return {
+        status: "Disconnected",
+        color: "bg-red-500",
+        textColor: "text-red-600",
+      };
+    }
+  };
+
+  const connectionStatus = getConnectionStatus();
 
   return (
     <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
       <details>
         <summary className="flex items-center cursor-pointer py-1">
           <div
-            className={`w-3 h-3 rounded-full mr-2 ${status.isWebSocketConnected ? "bg-green-500" : "bg-red-500"}`}
+            className={`w-3 h-3 rounded-full mr-2 ${connectionStatus.color}`}
           ></div>
           <h3 className="text-lg font-semibold">WebSocket Test</h3>
           <span className="ml-2 text-sm text-gray-500">
-            {status.isWebSocketConnected ? "Connected" : "Disconnected"}
+            {connectionStatus.status}
           </span>
         </summary>
-
         <div className="mt-4 pl-5">
           <div className="text-gray-700 mb-2">
             Status:{" "}
-            {status.isWebSocketConnected ? (
-              <span className="text-green-600 font-medium">Connected</span>
-            ) : (
-              <span className="text-red-600 font-medium">Disconnected</span>
-            )}
+            <span className={`${connectionStatus.textColor} font-medium`}>
+              {connectionStatus.status}
+            </span>
           </div>
 
           <div className="mt-2 p-3 bg-gray-50 rounded text-sm overflow-auto max-h-120">
@@ -123,10 +121,6 @@ function WebSocketTestInner() {
               Reactive Connection details:
             </div>
             <pre>{JSON.stringify(status, null, 2)}</pre>
-            <div className="font-semibold mb-1">
-              Nonreactive Connection details:
-            </div>
-            <pre>{JSON.stringify(manualStatus, null, 2)}</pre>
           </div>
         </div>
         <button
@@ -138,6 +132,59 @@ function WebSocketTestInner() {
       </details>
     </div>
   );
+}
+
+function WebSocketTest1() {
+  const queryResult = useQuery(api.myFunctions.simpleQuery, {
+    count: 1,
+    resultSizeInBytes: 100,
+  });
+  return <TestView queryResult={!!queryResult} />;
+}
+
+function WebSocketTest2() {
+  const queryResult = useQuery(api.myFunctions.simpleQuery, {
+    count: 1,
+    resultSizeInBytes: 10_000,
+  });
+  return <TestView queryResult={!!queryResult} />;
+}
+
+function WebSocketTest3() {
+  const queryResult = useQuery(api.myFunctions.simpleQuery, {
+    count: 1,
+    resultSizeInBytes: 1_000_000,
+  });
+  return <TestView queryResult={!!queryResult} />;
+}
+
+function WebSocketTest4() {
+  const queryResult = useQuery(api.myFunctions.simpleQuery, {
+    count: 1,
+    resultSizeInBytes: 5_000_000,
+  });
+  return <TestView queryResult={!!queryResult} />;
+}
+
+function WebSocketTest5() {
+  const args = { count: 1, resultSizeInBytes: 5_000_000 };
+  const loaded = [
+    useQuery(api.myFunctions.simpleQuery, { ...args, cacheBust: 1 }),
+    useQuery(api.myFunctions.simpleQuery, { ...args, cacheBust: 2 }),
+  ].every((x) => !!x);
+  return <TestView queryResult={loaded} />;
+}
+function WebSocketTest6() {
+  const args = { count: 1, resultSizeInBytes: 5_000_000 };
+  const loaded = [
+    useQuery(api.myFunctions.simpleQuery, { ...args, cacheBust: 1 }),
+    useQuery(api.myFunctions.simpleQuery, { ...args, cacheBust: 2 }),
+    useQuery(api.myFunctions.simpleQuery, { ...args, cacheBust: 3 }),
+    useQuery(api.myFunctions.simpleQuery, { ...args, cacheBust: 4 }),
+    useQuery(api.myFunctions.simpleQuery, { ...args, cacheBust: 5 }),
+    useQuery(api.myFunctions.simpleQuery, { ...args, cacheBust: 6 }),
+  ].every((x) => !!x);
+  return <TestView queryResult={loaded} />;
 }
 
 function HttpTest() {
@@ -298,6 +345,7 @@ function SSETest() {
   // Auto-run test on component mount
   useEffect(() => {
     runTest();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (
@@ -392,10 +440,9 @@ function ProxiedWebSocket() {
 }
 
 function ProxiedWebSockInner() {
-  const manualStatus = useNonreactiveConnectionStatus();
   const reactiveStatus = useConvexConnectionState();
   const mut = useMutation(api.myFunctions.addNumber);
-  useQuery(api.myFunctions.listNumbers, { count: 1 });
+  useQuery(api.myFunctions.simpleQuery, { count: 1 });
   const status = reactiveStatus;
 
   if (status === undefined) {
@@ -418,7 +465,6 @@ function ProxiedWebSockInner() {
             {status.isWebSocketConnected ? "Connected" : "Disconnected"}
           </span>
         </summary>
-
         <div className="mt-4 pl-5">
           <div className="text-gray-700 mb-2">
             Status:{" "}
@@ -434,10 +480,6 @@ function ProxiedWebSockInner() {
               Reactive Connection details:
             </div>
             <pre>{JSON.stringify(status, null, 2)}</pre>
-            <div className="font-semibold mb-1">
-              Nonreactive Connection details:
-            </div>
-            <pre>{JSON.stringify(manualStatus, null, 2)}</pre>
           </div>
         </div>
         <button
@@ -451,6 +493,49 @@ function ProxiedWebSockInner() {
   );
 }
 
+const webSocketTests = {
+  test1: { label: "100B", component: WebSocketTest1 },
+  test2: { label: "10KB", component: WebSocketTest2 },
+  test3: { label: "1MB", component: WebSocketTest3 },
+  test4: { label: "5MB", component: WebSocketTest4 },
+  test5: { label: "10MB", component: WebSocketTest5 },
+  test6: { label: "30MB", component: WebSocketTest6 },
+} as const;
+
+type WebSocketTestKey = keyof typeof webSocketTests;
+
+function WebSocketTestChooser() {
+  const [selectedTest, setSelectedTest] = useState<WebSocketTestKey>("test1");
+
+  const SelectedComponent = webSocketTests[selectedTest].component;
+
+  return (
+    <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+      <div className="mb-4">
+        <h3 className="text-lg font-semibold mb-3">WebSocket Tests</h3>
+        <div className="flex gap-2 flex-wrap">
+          {Object.entries(webSocketTests).map(([key, { label }]) => (
+            <button
+              key={key}
+              onClick={() => setSelectedTest(key as WebSocketTestKey)}
+              className={`px-4 py-2 rounded transition-colors ${
+                selectedTest === key
+                  ? "bg-indigo-600 text-white"
+                  : "bg-gray-200 text-gray-700 hover:bg-gray-300"
+              }`}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+      </div>
+      <ConnectedWebSocket key={selectedTest}>
+        <SelectedComponent />
+      </ConnectedWebSocket>
+    </div>
+  );
+}
+
 function Content() {
   return (
     <div className="flex flex-col gap-6 max-w-2xl mx-auto">
@@ -460,7 +545,7 @@ function Content() {
       <p className="text-gray-600 text-sm mb-2">
         Run each test to verify connectivity using different protocols.
       </p>
-      <WebSocketTest />
+      <WebSocketTestChooser />
       <HttpTest />
       <SSETest />
       <ProxiedWebSocket />
