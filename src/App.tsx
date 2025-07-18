@@ -514,6 +514,9 @@ function WebSocketTestChooser() {
     <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
       <div className="mb-4">
         <h3 className="text-lg font-semibold mb-3">WebSocket Tests</h3>
+        <p>
+          Try clicking each size (feel free to skip largest ones on mobile data)
+        </p>
         <div className="flex gap-2 flex-wrap">
           {Object.entries(webSocketTests).map(([key, { label }]) => (
             <button
