@@ -56,6 +56,7 @@ function ConnectedWebSocket({
   const [convex] = useState(
     () =>
       new ConvexReactClient(import.meta.env.VITE_CONVEX_URL as string, {
+        verbose: true,
         onServerDisconnectError: (err) => {
           console.log(
             `${name} ConvexReactClient client experienced server disconnect error:`,
