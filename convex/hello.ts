@@ -6,3 +6,6 @@ export const getHello = query({
     return "hello!";
   },
 });
+
+export const a = 1;
+
