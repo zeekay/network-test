@@ -2,6 +2,8 @@
 
 Tests browser connectivity to Convex services.
 
+<!-- Test comment added by Devin for dummy PR verification -->
+
 Checks three connection types:
 - WebSocket (real-time connection status)
 - HTTP (basic request/response)  
